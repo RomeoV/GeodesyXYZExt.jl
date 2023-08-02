@@ -5,6 +5,7 @@ import Geodesy.CoordinateTransformations: Transformation
 import Tau: τ
 import Rotations: RotZ
 import StaticArrays: FieldVector
+import StaticArrays: map, _map, similar_type, Size
 
 export ENUfromXYZ, XYZfromENU, XYZfromECEF, ECEFfromXYZ, XYZfromLLA, LLAfromXYZ,
        XYZfromUTM, UTMfromXYZ,
@@ -241,5 +242,15 @@ XYZfromUTM(origin, bearing, zone::Integer, isnorth::Bool, datum) = XYZfromLLA(or
 
 ### Base operations
 
+# this basically also overloads (ENU(1., 2., 3.) * 1m)
+# @inline function map(f, a1::ENU{<:Number})
+#     ENU(_map(f, a1))
+# end
+# @inline function map(f, a1::XYZ{<:Number})
+#     XYZ(_map(f, a1))
+# end
+
+similar_type(::Type{A}, ::Type{T}, s::Size{S}) where {A<:ENU, T, S} = ENU{T}
+similar_type(::Type{A}, ::Type{T}, s::Size{S}) where {A<:XYZ, T, S} = XYZ{T}
 
 end # module GeodesicXYZExt
