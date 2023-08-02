@@ -11,4 +11,5 @@ import Unitful
 
 @testset "GeodesyXYZExt" begin
     include("conversion.jl")
+    include("unitful.jl")
 end # @testset "GeodesyXYZExt"

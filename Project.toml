@@ -9,8 +9,13 @@ Rotations = "6038ab10-8711-5258-84ad-4b1120ba62dc"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Tau = "c544e3c2-d3e5-5802-ac44-44683f340e4a"
 
+[extensions]
+GeodesyXYZExtUnitfulExt = "Unitful"
+
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[weakdeps]
 Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [targets]
