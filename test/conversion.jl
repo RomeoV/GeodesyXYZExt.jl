@@ -44,6 +44,22 @@ import StaticArrays: FieldVector, SVector
         end
     end
 
+    @testset "Different coordinate systems" begin
+        @test XYZ(1., 2., 3.) + XYZ(1., 2., 3.) == XYZ(2., 4., 6.)
+        @test ENU(1., 2., 3.) + ENU(1., 2., 3.) == ENU(2., 4., 6.)
+        @test ECEF(1., 2., 3.) + ECEF(1., 2., 3.) == ECEF(2., 4., 6.)
+        @test @fastmath XYZ(1., 2., 3.) + XYZ(1., 2., 3.) == XYZ(2., 4., 6.)
+        @test @fastmath ENU(1., 2., 3.) + ENU(1., 2., 3.) == ENU(2., 4., 6.)
+        @test @fastmath ECEF(1., 2., 3.) + ECEF(1., 2., 3.) == ECEF(2., 4., 6.)
+
+        @test_throws CoordinateSystemError XYZ(1., 2., 3.) + ENU(1., 2., 3.)
+        @test_throws CoordinateSystemError ENU(1., 2., 3.) + XYZ(1., 2., 3.)
+        @test_throws CoordinateSystemError XYZ(1., 2., 3.) + ECEF(1., 2., 3.)
+        @test_throws CoordinateSystemError @fastmath XYZ(1., 2., 3.) + ENU(1., 2., 3.)
+        @test_throws CoordinateSystemError @fastmath ENU(1., 2., 3.) + XYZ(1., 2., 3.)
+        @test_throws CoordinateSystemError @fastmath XYZ(1., 2., 3.) + ECEF(1., 2., 3.)
+    end
+
 
     @testset "Readme example" begin
         DATUM=wgs84;

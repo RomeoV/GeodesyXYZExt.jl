@@ -13,6 +13,7 @@ export ENUfromXYZ, XYZfromENU, XYZfromECEF, ECEFfromXYZ, XYZfromLLA, LLAfromXYZ,
        XYZfromUTM, UTMfromXYZ,
        XYZfromUTMZ, UTMZfromXYZ,
        XYZ
+export CoordinateSystemError
 
 DATUM::Ref{Union{Datum, Nothing}} = nothing
 ORIGIN::Ref{Union{LLA, Nothing}} = nothing
@@ -265,6 +266,9 @@ In the `GeodesyXYZExt.jl` package we have explicitly disallowed adding/subtracti
 for different subtypes, as they are usually from a different coordinate system and must not be added. \
 Either transform both inputs to the same coordinate system or overload the operation for your specific subtypes.
 """);
+
+# Note that we don't block "all" operations. For instance, we could also block `isequal`, `isapprox` etc
+# But we can't block every operation, so we just do the common mistakes ones.
 @inline +(a::FieldVector, b::FieldVector) = throw(CoordinateSystemError(a, b))
 @inline -(a::FieldVector, b::FieldVector) = throw(CoordinateSystemError(a, b))
 @inline add_fast(a::FieldVector, b::FieldVector) = throw(CoordinateSystemError(a, b))
