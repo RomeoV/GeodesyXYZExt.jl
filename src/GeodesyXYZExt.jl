@@ -6,6 +6,8 @@ import Tau: τ
 import Rotations: RotZ
 import StaticArrays: FieldVector
 import StaticArrays: map, _map, similar_type, Size
+import Base: +, -
+import Base.FastMath: add_fast, sub_fast
 
 export ENUfromXYZ, XYZfromENU, XYZfromECEF, ECEFfromXYZ, XYZfromLLA, LLAfromXYZ,
        XYZfromUTM, UTMfromXYZ,
@@ -240,17 +242,47 @@ If `origin` is a `UTM` point, then it is assumed it is in the given specified zo
 XYZfromUTM(origin, bearing, zone::Integer, isnorth::Bool, datum) = XYZfromLLA(origin, bearing, datum) ∘ LLAfromUTM(zone, isnorth, datum)
 
 
-### Base operations
-
-# this basically also overloads (ENU(1., 2., 3.) * 1m)
-# @inline function map(f, a1::ENU{<:Number})
-#     ENU(_map(f, a1))
-# end
-# @inline function map(f, a1::XYZ{<:Number})
-#     XYZ(_map(f, a1))
-# end
-
+### StaticArray operations
 similar_type(::Type{A}, ::Type{T}, s::Size{S}) where {A<:ENU, T, S} = ENU{T}
 similar_type(::Type{A}, ::Type{T}, s::Size{S}) where {A<:XYZ, T, S} = XYZ{T}
+
+### Base operations
+#
+# We explicitly disallow adding vectors from different coordinate systems, e.g. `XYZ(1., 2., 3.) + ENU(1., 2. 3.)`.
+"""
+    struct CoordinateSystemError <: Exception
+Two arrays come from different coordinate systems and can not be combined. Translate to the same system first.
+"""
+struct CoordinateSystemError <: Exception
+    a::FieldVector
+    b::FieldVector
+end
+
+Base.showerror(io::IO, e::CoordinateSystemError) =
+    print(io, """
+CoordinateSystemError: Trying to combine $(typeof(e.a)) and $(typeof(e.b)). \
+In the `GeodesyXYZExt.jl` package we have explicitly disallowed adding/subtracting `StaticArrays.FieldArray` types \
+for different subtypes, as they are usually from a different coordinate system and must not be added. \
+Either transform both inputs to the same coordinate system or overload the operation for your specific subtypes.
+""");
+@inline +(a::FieldVector, b::FieldVector) = throw(CoordinateSystemError(a, b))
+@inline -(a::FieldVector, b::FieldVector) = throw(CoordinateSystemError(a, b))
+@inline add_fast(a::FieldVector, b::FieldVector) = throw(CoordinateSystemError(a, b))
+@inline sub_fast(a::FieldVector, b::FieldVector) = throw(CoordinateSystemError(a, b))
+
+@inline +(a::ENU, b::ENU) = map(+, a, b)
+@inline -(a::ENU, b::ENU) = map(-, a, b)
+@inline add_fast(a::ENU, b::ENU) = map(Base.FastMath.add_fast, a, b)
+@inline sub_fast(a::ENU, b::ENU) = map(Base.FastMath.sub_fast, a, b)
+
+@inline +(a::XYZ, b::XYZ) = map(+, a, b)
+@inline -(a::XYZ, b::XYZ) = map(-, a, b)
+@inline add_fast(a::XYZ, b::XYZ) = map(Base.FastMath.add_fast, a, b)
+@inline sub_fast(a::XYZ, b::XYZ) = map(Base.FastMath.sub_fast, a, b)
+
+@inline +(a::ECEF, b::ECEF) = map(+, a, b)
+@inline -(a::ECEF, b::ECEF) = map(-, a, b)
+@inline add_fast(a::ECEF, b::ECEF) = map(Base.FastMath.add_fast, a, b)
+@inline sub_fast(a::ECEF, b::ECEF) = map(Base.FastMath.sub_fast, a, b)
 
 end # module GeodesicXYZExt
