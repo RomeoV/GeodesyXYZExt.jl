@@ -11,6 +11,7 @@ Tau = "c544e3c2-d3e5-5802-ac44-44683f340e4a"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [targets]
-test = ["Test"]
+test = ["Test", "Unitful"]

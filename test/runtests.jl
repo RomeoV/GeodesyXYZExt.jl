@@ -3,14 +3,12 @@ import Geodesy: ENU
 using GeodesyXYZExt
 using Test
 import Tau: τ
+import Unitful
 
 ################################################
 ### Helpers for testing approximate equality ###
 ################################################
 
-# Interesting that this isn't in Base...
-Base.isapprox(a::T, b::T; kwargs...) where {T<:Tuple} = all(ntuple(i->isapprox(a[i],b[i]), length(a)); kwargs...)
-
-@testset "Geodesy" begin
+@testset "GeodesyXYZExt" begin
     include("conversion.jl")
 end # @testset "GeodesyXYZExt"

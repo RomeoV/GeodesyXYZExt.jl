@@ -11,6 +11,19 @@ export ENUfromXYZ, XYZfromENU, XYZfromECEF, ECEFfromXYZ, XYZfromLLA, LLAfromXYZ,
        XYZfromUTMZ, UTMZfromXYZ,
        XYZ
 
+DATUM::Ref{Union{Datum, Nothing}} = nothing
+ORIGIN::Ref{Union{LLA, Nothing}} = nothing
+BEARING::Ref{Union{Float64, Nothing}} = nothing
+function fixdatum!(datum::Union{Datum, Nothing})
+    DATUM[] = datum
+end
+function fixorigin!(origin::Union{LLA, Nothing})
+    ORIGIN[] = origin
+end
+function fixbearing!(bearing::Union{Float64, Nothing})
+    BEARING[] = bearing
+end
+
 """
     XYZ(x, y, z)
 
@@ -35,20 +48,26 @@ XYZ(xyz::XYZ, datum) = xyz
 ### ENU <-> XYZ coordinates  ###
 ################################
 
+ENU(xyz::XYZ) = ENU(xyz, BEARING[])
 ENU(xyz::XYZ, bearing) = ENUfromXYZ(bearing)(xyz)
+XYZ(enu::ENU) = XYZ(enu, BEARING[])
 XYZ(enu::ENU, bearing) = XYZfromENU(bearing)(enu)
 
 ################################
 ### ECEF <-> XYZ coordinates ###
 ################################
 
+XYZ(ecef::ECEF) = XYZ(ecef, ORIGIN[], BEARING[], DATUM[])
 XYZ(ecef::ECEF, origin, bearing, datum) = XYZfromECEF(origin, bearing, datum)(ecef)
+ECEF(xyz::XYZ) = ECEF(xyz, ORIGIN[], BEARING[], DATUM[])
 ECEF(xyz::XYZ, origin, bearing, datum) = ECEFfromXYZ(origin, bearing, datum)(xyz)
 ################################
 ### LLA <-> XYZ coordinates ###
 ################################
 
+XYZ(lla::LLA) =  XYZ(lla, ORIGIN[], BEARING[], DATUM[])
 XYZ(lla::LLA, origin, bearing, datum) =  XYZfromLLA(origin, bearing, datum)(lla)
+LLA(xyz::XYZ) = LLA(xyz, ORIGIN[], BEARING[], DATUM[])
 LLA(xyz::XYZ, origin, bearing, datum) = LLAfromXYZ(origin, bearing, datum)(xyz)
 
 
@@ -56,7 +75,9 @@ LLA(xyz::XYZ, origin, bearing, datum) = LLAfromXYZ(origin, bearing, datum)(xyz)
 ### XYZ <-> UTMZ coordinates ###
 ################################
 
+XYZ(utm::UTMZ) = XYZ(utm, ORIGIN[], BEARING[], DATUM[])
 XYZ(utm::UTMZ, origin, bearing, datum) = XYZfromUTMZ(origin, bearing, datum)(utm)
+UTMZ(xyz::XYZ) = UTMZ(xyz, ORIGIN[], BEARING[], DATUM[])
 UTMZ(xyz::XYZ, origin, bearing, datum) = UTMZfromXYZ(origin, bearing, datum)(xyz)
 
 
@@ -92,11 +113,11 @@ Base.show(io::IO, ::ENUfromXYZ) = print(io, "ENUfromXYZ()")
 function (obj::ENUfromXYZ)(xyz::XYZ)
     θ = τ/4 - obj.bearing  # counter-clockwise from E-axis
     R = RotZ(θ)
-    ENU(R*xyz)
+    convert(ENU, R*xyz)
 end
 
 """
-    XYZfromENU(enu::ENU)
+    XYZfromENU(bearing::Float64)
 
 Construct a `Transformation` object to convert from local `ENU` coordinates
 to local `XYZ` coordinates centered at the same origin. This is a simple
@@ -113,11 +134,11 @@ Base.show(io::IO, ::XYZfromENU) = print(io, "XYZfromENU()")
 function (obj::XYZfromENU)(enu::ENU)
     θ = τ/4 - obj.bearing  # counter-clockwise from E-axis
     R = RotZ(θ)
-    XYZ(inv(R)*enu)
+    convert(XYZ, inv(R)*enu)
 end
 
-Base.inv(::ENUfromXYZ) = XYZfromENU()
-Base.inv(::XYZfromENU) = ENUfromXYZ()
+Base.inv(obj::ENUfromXYZ) = XYZfromENU(obj.bearing)
+Base.inv(obj::XYZfromENU) = ENUfromXYZ(obj.bearing)
 
 
 
@@ -126,18 +147,18 @@ Base.inv(::XYZfromENU) = ENUfromXYZ()
 ##################
 
 """
-    XYZfromECEF(origin, datum)
+    XYZfromECEF(origin, bearing, datum)
     XYZfromECEF(origin::UTM, zone, isnorth, datum)
     XYZfromECEF(origin::ECEF, lat, lon)
 
-Construct a composite transformation XYZfromENU() ∘ ENUfromECEF(origin, datum)
+Construct a composite transformation XYZfromENU(bearing) ∘ ENUfromECEF(origin, datum)
 to convert from global `ECEF` coordinates to local `XYZ` coordinates centered at the `origin`.
 This object pre-caches both the ECEF coordinates and latitude and longitude of the origin for maximal efficiency.
 """
 XYZfromECEF(origin, bearing, datum) = XYZfromENU(bearing) ∘ ENUfromECEF(origin, datum)
 
 """
-    ECEFfromXYZ(origin, datum)
+    ECEFfromXYZ(origin, bearing, datum)
     ECEFfromXYZ(origin::UTM, zone, isnorth, datum)
     ECEFfromXYZ(origin::ECEF, lat, lon)
 
@@ -145,7 +166,7 @@ Construct a composite transformation ECEFfromENU(origin,datum) ∘ ENUfromXYZ()
 to convert from local `XYZ` coordinates centred at `origin` to global `ECEF` coodinates.
 This object pre-caches both the ECEF coordinates and latitude and longitude of the origin for maximal efficiency.
 """
-ECEFfromXYZ(origin, bearing, datum) = ECEFfromENU(origin, bearing, datum) ∘ ENUfromXYZ()
+ECEFfromXYZ(origin, bearing, datum) = ECEFfromENU(origin, datum) ∘ ENUfromXYZ(bearing)
 
 
 
@@ -154,16 +175,16 @@ ECEFfromXYZ(origin, bearing, datum) = ECEFfromENU(origin, bearing, datum) ∘ EN
 #################
 
 """
-    XYZfromLLA(origin, datum)
+    XYZfromLLA(origin, bearing, datum)
 
-Creates composite transformation `XYZfromECEF(origin, datum) ∘ ECEFfromLLA(datum)`.
+Creates composite transformation `XYZfromECEF(origin, bearing, datum) ∘ ECEFfromLLA(datum)`.
 """
 XYZfromLLA(origin, bearing, datum) = XYZfromECEF(origin, bearing, datum) ∘ ECEFfromLLA(datum)
 
 """
-    LLAfromXYZ(origin, datum)
+    LLAfromXYZ(origin, bearing, datum)
 
-Creates composite transformation `LLAfromECEF(datum) ∘ ECEFfromXYZ(origin, datum)`.
+Creates composite transformation `LLAfromECEF(datum) ∘ ECEFfromXYZ(origin, bearing, datum)`.
 """
 LLAfromXYZ(origin, bearing, datum) = LLAfromECEF(datum) ∘ ECEFfromXYZ(origin, bearing, datum)
 
@@ -174,13 +195,13 @@ LLAfromXYZ(origin, bearing, datum) = LLAfromECEF(datum) ∘ ECEFfromXYZ(origin, 
 ## XYZ <-> UTMZ ##
 ##################
 
-XYZfromECEF(origin::UTMZ, bearing, datum) = XYZfromECEF(LLAfromUTMZ(datum)(origin, bearing), datum)
-ECEFfromXYZ(origin::UTMZ, bearing, datum) = ECEFfromXYZ(LLAfromUTMZ(datum)(origin, bearing), datum)
+XYZfromECEF(origin::UTMZ, bearing, datum) = XYZfromECEF(LLAfromUTMZ(datum)(origin), datum)
+ECEFfromXYZ(origin::UTMZ, bearing, datum) = ECEFfromXYZ(LLAfromUTMZ(datum)(origin), datum)
 
 """
-    XYZfromUTMZ(origin, datum)
+    XYZfromUTMZ(origin, bearing, datum)
 
-Creates composite transformation `ENUfromLLA(origin, datum) ∘ LLAfromUTMZ(datum)`.
+Creates composite transformation `ENUfromLLA(origin, bearing, datum) ∘ LLAfromUTMZ(datum)`.
 """
 XYZfromUTMZ(origin, bearing, datum) = XYZfromLLA(origin, bearing, datum) ∘ LLAfromUTMZ(datum)
 
@@ -194,12 +215,12 @@ UTMZfromXYZ(origin, bearing, datum) = UTMZfromLLA(datum) ∘ LLAfromXYZ(origin, 
 #################
 ## XYZ <-> UTM ##
 #################
-XYZfromECEF(origin::UTM, bearing, zone::Integer, isnorth::Bool, datum) = XYZfromECEF(LLAfromUTM(zone, isnorth, datum)(origin, bearing), datum)
-ECEFfromXYZ(origin::UTM, bearing, zone::Integer, isnorth::Bool, datum) = ECEFfromXYZ(LLAfromUTM(zone, isnorth, datum)(origin, bearing), datum)
+XYZfromECEF(origin::UTM, bearing, zone::Integer, isnorth::Bool, datum) = XYZfromECEF(LLAfromUTM(zone, isnorth, datum)(origin), bearing, datum)
+ECEFfromXYZ(origin::UTM, bearing, zone::Integer, isnorth::Bool, datum) = ECEFfromXYZ(LLAfromUTM(zone, isnorth, datum)(origin), bearing, datum)
 
 # Assume origin and utm point share the same zone and hemisphere
-UTMfromXYZ(origin::UTM, bearing, zone::Integer, isnorth::Bool, datum) = UTMfromLLA(zone, isnorth, datum) ∘ LLAfromXYZ(UTMZ(origin, bearing, zone, isnorth), datum)
-XYZfromUTM(origin::UTM, bearing, zone::Integer, isnorth::Bool, datum) = XYZfromLLA(UTMZ(origin, bearing, zone, isnorth), datum) ∘ LLAfromUTM(zone, isnorth, datum)
+UTMfromXYZ(origin::UTM, bearing, zone::Integer, isnorth::Bool, datum) = UTMfromLLA(zone, isnorth, datum) ∘ LLAfromXYZ(UTMZ(origin, zone, isnorth), bearing, datum)
+XYZfromUTM(origin::UTM, bearing, zone::Integer, isnorth::Bool, datum) = XYZfromLLA(UTMZ(origin, zone, isnorth), bearing, datum) ∘ LLAfromUTM(zone, isnorth, datum)
 
 """
     UTMfromXYZ(origin, bearing, zone, isnorth, datum)
@@ -216,4 +237,9 @@ Creates composite transformation `UTMfromLLA(zone, isnorth, datum) ∘ LLAfromXY
 If `origin` is a `UTM` point, then it is assumed it is in the given specified zone and hemisphere.
 """
 XYZfromUTM(origin, bearing, zone::Integer, isnorth::Bool, datum) = XYZfromLLA(origin, bearing, datum) ∘ LLAfromUTM(zone, isnorth, datum)
+
+
+### Base operations
+
+
 end # module GeodesicXYZExt
