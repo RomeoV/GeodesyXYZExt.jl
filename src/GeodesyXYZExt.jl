@@ -271,10 +271,10 @@ Either transform both inputs to the same coordinate system or overload the opera
 
 # Note that we don't block "all" operations. For instance, we could also block `isequal`, `isapprox` etc
 # But we can't block every operation, so we just do the common mistakes ones.
-@inline +(a::FieldVector, b::FieldVector) = throw(CoordinateSystemError(a, b))
-@inline -(a::FieldVector, b::FieldVector) = throw(CoordinateSystemError(a, b))
-@inline add_fast(a::FieldVector, b::FieldVector) = throw(CoordinateSystemError(a, b))
-@inline sub_fast(a::FieldVector, b::FieldVector) = throw(CoordinateSystemError(a, b))
+@inline +(a::FV, b::FV′) where {FV<:FieldVector, FV′<:FieldVector} = throw(CoordinateSystemError(a, b))
+@inline -(a::FV, b::FV′) where {FV<:FieldVector, FV′<:FieldVector} = throw(CoordinateSystemError(a, b))
+@inline add_fast(a::FV, b::FV′) where {FV<:FieldVector, FV′<:FieldVector} = throw(CoordinateSystemError(a, b))
+@inline sub_fast(a::FV, b::FV′) where {FV<:FieldVector, FV′<:FieldVector} = throw(CoordinateSystemError(a, b))
 
 @inline +(a::ENU, b::ENU) = map(+, a, b)
 @inline -(a::ENU, b::ENU) = map(-, a, b)
