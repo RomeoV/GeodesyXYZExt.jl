@@ -1,9 +1,8 @@
-import StaticArrays: FieldVector, SVector
 @testset "Co-ordinate system conversion" begin
     @testset "Fixed conversions" begin
         # ENU <-> XYZ
-        @testset "bearing 0°" begin
-            bearing = 0.
+        @testset "bearing 90°" begin
+            bearing = τ/4
             let XYZfromENU_ = XYZfromENU(bearing),
                 ENUfromXYZ_ = ENUfromXYZ(bearing)
 
@@ -19,8 +18,8 @@ import StaticArrays: FieldVector, SVector
         end
 
         # ENU <-> XYZ
-        @testset "bearing -90°" begin
-            bearing = -τ/4
+        @testset "bearing 180°" begin
+            bearing = τ/2
             let XYZfromENU_ = XYZfromENU(bearing),
                 ENUfromXYZ_ = ENUfromXYZ(bearing)
 

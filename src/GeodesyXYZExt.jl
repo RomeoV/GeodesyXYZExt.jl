@@ -24,6 +24,7 @@ end
 function fixorigin!(origin::Union{LLA, Nothing})
     ORIGIN[] = origin
 end
+"Bearing from East in clockwise (mathematically positive) direction"
 function fixbearing!(bearing::Union{Float64, Nothing})
     BEARING[] = bearing
 end
@@ -115,7 +116,7 @@ end
 Base.show(io::IO, ::ENUfromXYZ) = print(io, "ENUfromXYZ()")
 
 function (obj::ENUfromXYZ)(xyz::XYZ)
-    θ = τ/4 - obj.bearing  # counter-clockwise from E-axis
+    θ = obj.bearing  # counter-clockwise from E-axis
     R = RotZ(θ)
     convert(ENU, R*xyz)
 end
@@ -136,7 +137,7 @@ end     # singleton type
 Base.show(io::IO, ::XYZfromENU) = print(io, "XYZfromENU()")
 
 function (obj::XYZfromENU)(enu::ENU)
-    θ = τ/4 - obj.bearing  # counter-clockwise from E-axis
+    θ = obj.bearing  # counter-clockwise from E-axis
     R = RotZ(θ)
     convert(XYZ, inv(R)*enu)
 end
