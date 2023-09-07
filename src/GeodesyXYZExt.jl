@@ -246,8 +246,8 @@ XYZfromUTM(origin, bearing, zone::Integer, isnorth::Bool, datum) = XYZfromLLA(or
 
 ### StaticArray operations
 # see `?FieldVector`
-similar_type(::Type{<:ENU}, ::Type{T}, s::Size{3}) where {T} = ENU{T}
-similar_type(::Type{<:XYZ}, ::Type{T}, s::Size{3}) where {T} = XYZ{T}
+similar_type(::Type{<:ENU}, ::Type{T}, s::Size{S}) where {T, S} = ENU{T}
+similar_type(::Type{<:XYZ}, ::Type{T}, s::Size{S}) where {T, S} = XYZ{T}
 
 ### Base operations
 #
