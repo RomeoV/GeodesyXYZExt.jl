@@ -276,19 +276,9 @@ Either transform both inputs to the same coordinate system or overload the opera
 @inline add_fast(a::FV, b::FV′) where {FV<:FieldVector, FV′<:FieldVector} = throw(CoordinateSystemError(a, b))
 @inline sub_fast(a::FV, b::FV′) where {FV<:FieldVector, FV′<:FieldVector} = throw(CoordinateSystemError(a, b))
 
-@inline +(a::ENU, b::ENU) = map(+, a, b)
-@inline -(a::ENU, b::ENU) = map(-, a, b)
-@inline add_fast(a::ENU, b::ENU) = map(Base.FastMath.add_fast, a, b)
-@inline sub_fast(a::ENU, b::ENU) = map(Base.FastMath.sub_fast, a, b)
-
-@inline +(a::XYZ, b::XYZ) = map(+, a, b)
-@inline -(a::XYZ, b::XYZ) = map(-, a, b)
-@inline add_fast(a::XYZ, b::XYZ) = map(Base.FastMath.add_fast, a, b)
-@inline sub_fast(a::XYZ, b::XYZ) = map(Base.FastMath.sub_fast, a, b)
-
-@inline +(a::ECEF, b::ECEF) = map(+, a, b)
-@inline -(a::ECEF, b::ECEF) = map(-, a, b)
-@inline add_fast(a::ECEF, b::ECEF) = map(Base.FastMath.add_fast, a, b)
-@inline sub_fast(a::ECEF, b::ECEF) = map(Base.FastMath.sub_fast, a, b)
+@inline +(a::FV, b::FV) where {FV<:FieldVector} = map(+, a, b)
+@inline -(a::FV, b::FV) where {FV<:FieldVector} = map(-, a, b)
+@inline add_fast(a::FV, b::FV) where {FV<:FieldVector} = map(Base.FastMath.add_fast, a, b)
+@inline sub_fast(a::FV, b::FV) where {FV<:FieldVector} = map(Base.FastMath.sub_fast, a, b)
 
 end # module GeodesicXYZExt
