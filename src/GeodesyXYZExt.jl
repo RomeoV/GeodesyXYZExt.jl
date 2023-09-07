@@ -269,16 +269,26 @@ for different subtypes, as they are usually from a different coordinate system a
 Either transform both inputs to the same coordinate system or overload the operation for your specific subtypes.
 """);
 
-# Note that we don't block "all" operations. For instance, we could also block `isequal`, `isapprox` etc
-# But we can't block every operation, so we just do the common mistakes ones.
-@inline +(a::FV, b::FV′) where {FV<:FieldVector, FV′<:FieldVector} = throw(CoordinateSystemError(a, b))
-@inline -(a::FV, b::FV′) where {FV<:FieldVector, FV′<:FieldVector} = throw(CoordinateSystemError(a, b))
-@inline add_fast(a::FV, b::FV′) where {FV<:FieldVector, FV′<:FieldVector} = throw(CoordinateSystemError(a, b))
-@inline sub_fast(a::FV, b::FV′) where {FV<:FieldVector, FV′<:FieldVector} = throw(CoordinateSystemError(a, b))
+ctype(::T) where T<:FieldVector = T.name.wrapper
 
 @inline +(a::FV, b::FV) where {FV<:FieldVector} = map(+, a, b)
+@inline +(a::FV, b::FV′) where {FV<:FieldVector, FV′<:FieldVector} = +(a, ctype(a), b, ctype(b))
+@inline +(a::FV, ::Type{T}, b::FV′, ::Type{T}) where {FV<:FieldVector, FV′<:FieldVector, T} = map(+, a, b)
+@inline +(a::FV, ::Type{T}, b::FV′, ::Type{T′}) where {FV<:FieldVector, FV′<:FieldVector, T, T′} = throw(CoordinateSystemError(a, b))
+
 @inline -(a::FV, b::FV) where {FV<:FieldVector} = map(-, a, b)
-@inline add_fast(a::FV, b::FV) where {FV<:FieldVector} = map(Base.FastMath.add_fast, a, b)
-@inline sub_fast(a::FV, b::FV) where {FV<:FieldVector} = map(Base.FastMath.sub_fast, a, b)
+@inline -(a::FV, b::FV′) where {FV<:FieldVector, FV′<:FieldVector} = -(a, ctype(a), b, ctype(b))
+@inline -(a::FV, ::Type{T}, b::FV′, ::Type{T}) where {FV<:FieldVector, FV′<:FieldVector, T} = map(-, a, b)
+@inline -(a::FV, ::Type{T}, b::FV′, ::Type{T′}) where {FV<:FieldVector, FV′<:FieldVector, T, T′} = throw(CoordinateSystemError(a, b))
+
+@inline add_fast(a::FV, b::FV) where {FV<:FieldVector} = map(add_fast, a, b)
+@inline add_fast(a::FV, b::FV′) where {FV<:FieldVector, FV′<:FieldVector} = add_fast(a, ctype(a), b, ctype(b))
+@inline add_fast(a::FV, ::Type{T}, b::FV′, ::Type{T}) where {FV<:FieldVector, FV′<:FieldVector, T} = map(add_fast, a, b)
+@inline add_fast(a::FV, ::Type{T}, b::FV′, ::Type{T′}) where {FV<:FieldVector, FV′<:FieldVector, T, T′} = throw(CoordinateSystemError(a, b))
+
+@inline sub_fast(a::FV, b::FV) where {FV<:FieldVector} = map(sub_fast, a, b)
+@inline sub_fast(a::FV, b::FV′) where {FV<:FieldVector, FV′<:FieldVector} = sub_fast(a, ctype(a), b, ctype(b))
+@inline sub_fast(a::FV, ::Type{T}, b::FV′, ::Type{T}) where {FV<:FieldVector, FV′<:FieldVector, T} = map(sub_fast, a, b)
+@inline sub_fast(a::FV, ::Type{T}, b::FV′, ::Type{T′}) where {FV<:FieldVector, FV′<:FieldVector, T, T′} = throw(CoordinateSystemError(a, b))
 
 end # module GeodesicXYZExt

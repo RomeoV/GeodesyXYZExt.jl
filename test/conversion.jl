@@ -48,6 +48,9 @@
         @test @fastmath ENU(1., 2., 3.) + ENU(1., 2., 3.) == ENU(2., 4., 6.)
         @test @fastmath ECEF(1., 2., 3.) + ECEF(1., 2., 3.) == ECEF(2., 4., 6.)
 
+        @test XYZ(1., 2., 3.) + XYZ(1, 2, 3) == XYZ(2., 4., 6.)
+        @test @fastmath XYZ(1., 2., 3.) + XYZ(1, 2, 3) == XYZ(2., 4., 6.)
+
         @test_throws CoordinateSystemError XYZ(1., 2., 3.) + ENU(1., 2., 3.)
         @test_throws CoordinateSystemError ENU(1., 2., 3.) + XYZ(1., 2., 3.)
         @test_throws CoordinateSystemError XYZ(1., 2., 3.) + ECEF(1., 2., 3.)
